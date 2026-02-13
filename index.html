@@ -3,281 +3,413 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Interactive Garden Party Planner</title>
+<title>Garden Party Planner with Have/Need Lists</title>
 
 <style>
 body {
-  font-family: Arial, sans-serif;
-  margin: 0;
-  padding: 20px;
-  background: #f4f8f2;
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #f4f7f2;
+    color: #2f3e2f;
 }
 
-h1 {
-  text-align: center;
-  margin-bottom: 10px;
+header {
+    text-align: center;
+    padding: 40px 20px;
+    background: linear-gradient(to right, #cde5cd, #eaf4ea);
 }
 
-button {
-  padding: 8px 12px;
-  margin: 5px 0;
-  cursor: pointer;
+header h1 {
+    margin: 0;
+    font-size: 2.2rem;
 }
 
-.card {
-  border-radius: 10px;
-  padding: 15px;
-  margin: 20px 0;
-  background: white;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+header p {
+    margin-top: 10px;
+    font-size: 1.1rem;
+    opacity: 0.8;
 }
 
-.card h2 {
-  margin-top: 0;
+.container {
+    max-width: 1000px;
+    margin: 30px auto;
+    padding: 20px;
 }
 
-.timeline1 { border-left: 8px solid #6dbf73; }
-.timeline2 { border-left: 8px solid #f4a261; }
-.timeline3 { border-left: 8px solid #e76f51; }
-.timeline4 { border-left: 8px solid #8ecae6; }
-.timeline5 { border-left: 8px solid #b5838d; }
-.timeline6 { border-left: 8px solid #6a4c93; }
-.timeline7 { border-left: 8px solid #2a9d8f; }
-
-ul {
-  list-style: none;
-  padding: 0;
+.section {
+    padding: 25px;
+    margin-bottom: 25px;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.05);
 }
 
-li {
-  padding: 6px;
-  background: #f9f9f9;
-  margin: 5px 0;
-  border-radius: 5px;
-  cursor: grab;
+/* Color-coded cards */
+.section:nth-child(odd) { background-color: #eaf4ea; }
+.section:nth-child(even) { background-color: #d1e7d1; }
+
+.section h2, .section h3 {
+    margin-top: 0;
+    color: #3b5d3b;
+}
+
+/* Task checklist */
+.task-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.task-item input[type="checkbox"] {
+    margin-right: 10px;
+}
+
+/* Budget & lists tables */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+table th, table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+table th {
+    background-color: #cde5cd;
+    text-align: left;
 }
 
 input[type="text"], input[type="number"] {
-  width: 100%;
-  padding: 6px;
-  margin: 5px 0;
+    width: 90%;
+    padding: 6px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    margin-top: 5px;
 }
 
-.summary {
-  font-weight: bold;
-  font-size: 18px;
-  margin-top: 20px;
+button {
+    padding: 8px 16px;
+    margin-top: 8px;
+    background-color: #3b5d3b;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
 }
 
+button:hover {
+    background-color: #2f4b2f;
+}
+
+.total-cost {
+    margin-top: 10px;
+    font-weight: bold;
+    font-size: 1rem;
+}
+
+#overall-summary {
+    background-color: #cde5cd;
+    padding: 15px;
+    border-radius: 10px;
+    font-weight: bold;
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+/* Section lists */
+.list-container {
+    margin-top: 15px;
+}
+
+.list-container ul {
+    padding-left: 20px;
+}
+
+.list-container li {
+    margin-bottom: 5px;
+}
 </style>
 </head>
 
 <body>
 
-<h1>🌿 Interactive Garden Party Planner</h1>
-<button onclick="exportPDF()">📄 Export Planner as PDF</button>
+<header>
+    <h1>Interactive Garden Party Planner</h1>
+    <p>Track tasks, budgets, and items you have/need with auto-save!</p>
+</header>
 
-<div id="planner"></div>
-
-<div class="summary">
-Total Budget Across All Timelines: $<span id="totalBudget">0</span>
+<div class="container">
+    <div id="overall-summary">Total Cost Across All Timelines: $0</div>
+    <div id="planner-container"></div>
 </div>
 
 <script>
-const timelines = [
-{
-title:"1–2 Weeks Before: Planning & Foundations",
-class:"timeline1",
-tasks:[
-"Decide the purpose & vibe",
-"Set a date, time, and guest count",
-"Choose a theme / color palette",
-"Create a rough budget",
-"Plan the menu",
-"Check weather + backup plan",
-"Make guest list & send invites",
-"List what you already have vs need"
-]
-},
-{
-title:"5–7 Days Before: Prep Mode",
-class:"timeline2",
-tasks:[
-"Finalize menu & drinks",
-"Shop non-perishables",
-"Drinks & ice plan",
-"Disposable items",
-"Arrange rentals",
-"Plan seating layout",
-"Test lighting",
-"Prepare playlist",
-"Tidy garden"
-]
-},
-{
-title:"2–3 Days Before: Execution Begins",
-class:"timeline3",
-tasks:[
-"Grocery shop fresh items",
-"Clean outdoor space",
-"Clean bathrooms",
-"Clean kitchen",
-"Prep make-ahead foods",
-"Chill drinks",
-"Iron linens",
-"Charge speakers/lights"
-]
-},
-{
-title:"1 Day Before: Set the Stage",
-class:"timeline4",
-tasks:[
-"Arrange tables & chairs",
-"Set tablecloths & centerpieces",
-"Set up lights/candles",
-"Prep serving trays",
-"Final garden sweep",
-"Confirm RSVPs",
-"Event-day checklist",
-"Sleep well"
-]
-},
-{
-title:"Day Of – Morning",
-class:"timeline5",
-tasks:[
-"Light cleaning",
-"Finish food prep",
-"Chill drinks & ice",
-"Set up drink station",
-"Trash & recycling bins",
-"Walk-through flow"
-]
-},
-{
-title:"1 Hour Before Guests Arrive",
-class:"timeline6",
-tasks:[
-"Final table setting",
-"Food out",
-"Music on",
-"Candles/lights ready",
-"Change outfit",
-"Mindset shift"
-]
-},
-{
-title:"During & After Party",
-class:"timeline7",
-tasks:[
-"Greet guests",
-"Refill drinks & food",
-"Manage timing",
-"Take photos",
-"Clear food safely",
-"Quick cleanup",
-"Note what worked"
-]
-}
-];
+// ===== Preloaded Timeline Tasks =====
+const tasksData = {
+    "1–2 Weeks Before: Planning & Foundations": [
+        "Decide the purpose & vibe (casual brunch, evening cocktails, BBQ, etc.)",
+        "Set a date, time, and guest count",
+        "Choose a theme / color palette",
+        "Create a rough budget",
+        "Plan the menu (homemade vs catered vs potluck)",
+        "Check weather patterns + decide on a backup plan",
+        "Make a guest list and send invites",
+        "List what you already have vs what you need (tables, chairs, lights, serveware)"
+    ],
+    "5–7 Days Before: Prep Mode": [
+        "Finalize the menu & drinks",
+        "Order or shop for non-perishable food",
+        "Drinks & ice plan",
+        "Disposable items (napkins, cups, plates if needed)",
+        "Arrange rentals (chairs, tables, umbrellas, heaters)",
+        "Plan seating & table layout",
+        "Test outdoor lighting",
+        "Prepare a playlist",
+        "Tidy the garden (weeding, sweeping, pruning)"
+    ],
+    "2–3 Days Before: Execution Begins": [
+        "Grocery shop for fresh ingredients",
+        "Clean outdoor space",
+        "Clean bathrooms",
+        "Clean kitchen",
+        "Prep make-ahead foods (sauces, marinades, desserts)",
+        "Chill drinks that can be chilled early",
+        "Iron / set aside table linens",
+        "Charge speakers, lights, candles, power banks"
+    ],
+    "1 Day Before: Set the Stage": [
+        "Arrange tables and chairs",
+        "Set up tablecloths",
+        "Set up centerpieces",
+        "String lights / candles",
+        "Prep serving trays & label dishes if needed",
+        "Final garden sweep",
+        "Confirm RSVPs",
+        "Lay out an event-day checklist",
+        "Get a good night’s sleep (underrated but critical)"
+    ],
+    "Day Of – Morning": [
+        "Light cleaning touch-ups",
+        "Finish food prep",
+        "Chill drinks & prep ice",
+        "Set up drink station",
+        "Place trash & recycling bins discreetly",
+        "Do a walk-through of the flow (entry → seating → food → drinks)"
+    ],
+    "1 Hour Before Guests Arrive": [
+        "Final table setting",
+        "Food out (or warming)",
+        "Background music on",
+        "Candles/lights ready",
+        "Change into hosting outfit",
+        "Deep breath + mindset shift from manager → host"
+    ],
+    "During the Party": [
+        "Greet guests",
+        "Refill drinks & food as needed",
+        "Quietly manage timing",
+        "Take photos (or assign someone)",
+        "Let go of perfection"
+    ],
+    "After the Party": [
+        "Clear food safely",
+        "Quick cleanup (trash, dishes soak)",
+        "Leave deep cleaning for the next day",
+        "Mentally note what worked & what didn’t"
+    ]
+};
 
-function saveData() {
-  const data = [];
-  document.querySelectorAll(".card").forEach(card => {
-    const tasks = [];
-    card.querySelectorAll("li").forEach(li => tasks.push(li.innerText));
-    data.push({
-      budget: card.querySelector(".budget").value,
-      have: card.querySelector(".have").value,
-      need: card.querySelector(".need").value,
-      tasks: tasks
+const container = document.getElementById("planner-container");
+const overallSummaryEl = document.getElementById("overall-summary");
+
+// Load saved data from localStorage
+let savedData = JSON.parse(localStorage.getItem("gardenPlannerData")) || {};
+
+// ===== Render Each Section =====
+for (let section in tasksData) {
+    const sectionDiv = document.createElement("div");
+    sectionDiv.className = "section";
+
+    const h2 = document.createElement("h2");
+    h2.textContent = section;
+    sectionDiv.appendChild(h2);
+
+    // Task list
+    tasksData[section].forEach((task, idx) => {
+        const taskDiv = document.createElement("div");
+        taskDiv.className = "task-item";
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        if (savedData[section] && savedData[section].tasks && savedData[section].tasks[idx]) {
+            checkbox.checked = savedData[section].tasks[idx];
+        }
+        checkbox.onchange = saveTasks;
+        const span = document.createElement("span");
+        span.textContent = task;
+        taskDiv.appendChild(checkbox);
+        taskDiv.appendChild(span);
+        sectionDiv.appendChild(taskDiv);
     });
-  });
-  localStorage.setItem("gardenPlanner", JSON.stringify(data));
-}
 
-function loadData() {
-  return JSON.parse(localStorage.getItem("gardenPlanner"));
-}
-
-function updateTotalBudget() {
-  let total = 0;
-  document.querySelectorAll(".budget").forEach(input=>{
-    total += parseFloat(input.value) || 0;
-  });
-  document.getElementById("totalBudget").innerText = total.toFixed(2);
-}
-
-function createPlanner() {
-  const saved = loadData();
-  const container = document.getElementById("planner");
-
-  timelines.forEach((timeline, index)=>{
-    const card = document.createElement("div");
-    card.className = `card ${timeline.class}`;
-
-    card.innerHTML = `
-      <h2>${timeline.title}</h2>
-      <label>Budget ($)</label>
-      <input type="number" class="budget" value="${saved?.[index]?.budget || ''}">
-      <label>Things You Have</label>
-      <input type="text" class="have" placeholder="Tables, chairs..." value="${saved?.[index]?.have || ''}">
-      <label>Need to Buy / Rent</label>
-      <input type="text" class="need" placeholder="Lights, heaters..." value="${saved?.[index]?.need || ''}">
-      <h4>Tasks (Drag to Reorder)</h4>
-      <ul></ul>
+    // ===== Budget Table =====
+    const budgetTable = document.createElement("table");
+    budgetTable.innerHTML = `
+        <thead>
+            <tr>
+                <th>Item</th>
+                <th>Estimated Cost ($)</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
     `;
+    sectionDiv.appendChild(budgetTable);
+    const tbody = budgetTable.querySelector("tbody");
 
-    const ul = card.querySelector("ul");
-    const tasks = saved?.[index]?.tasks || timeline.tasks;
+    const budgetInputDiv = document.createElement("div");
+    budgetInputDiv.style.marginTop = "10px";
+    budgetInputDiv.innerHTML = `
+        <input type="text" placeholder="Item name" class="budget-item-name">
+        <input type="number" placeholder="Estimated cost" class="budget-item-cost">
+        <button>Add Item</button>
+        <div class="total-cost">Total: $0</div>
+    `;
+    sectionDiv.appendChild(budgetInputDiv);
 
-    tasks.forEach(task=>{
-      const li = document.createElement("li");
-      li.draggable = true;
-      li.textContent = task;
-      ul.appendChild(li);
-    });
+    const addBudgetBtn = budgetInputDiv.querySelector("button");
+    const itemNameInput = budgetInputDiv.querySelector(".budget-item-name");
+    const itemCostInput = budgetInputDiv.querySelector(".budget-item-cost");
+    const totalCostEl = budgetInputDiv.querySelector(".total-cost");
+    let sectionTotal = 0;
 
-    addDragAndDrop(ul);
-
-    card.querySelectorAll("input").forEach(input=>{
-      input.addEventListener("input", ()=>{
-        saveData();
-        updateTotalBudget();
-      });
-    });
-
-    container.appendChild(card);
-  });
-
-  updateTotalBudget();
-}
-
-function addDragAndDrop(ul) {
-  let dragged;
-
-  ul.addEventListener("dragstart", e=>{
-    dragged = e.target;
-  });
-
-  ul.addEventListener("dragover", e=>{
-    e.preventDefault();
-  });
-
-  ul.addEventListener("drop", e=>{
-    e.preventDefault();
-    if (e.target.tagName === "LI") {
-      ul.insertBefore(dragged, e.target);
-      saveData();
+    if (savedData[section] && savedData[section].budget) {
+        savedData[section].budget.forEach(b => {
+            const row = createBudgetRow(b.name, b.cost, tbody, totalCostEl);
+            tbody.appendChild(row);
+            sectionTotal += b.cost;
+        });
+        totalCostEl.textContent = `Total: $${sectionTotal.toFixed(2)}`;
     }
-  });
+
+    addBudgetBtn.onclick = () => {
+        const name = itemNameInput.value.trim();
+        const cost = parseFloat(itemCostInput.value);
+        if (!name || isNaN(cost)) return;
+        const row = createBudgetRow(name, cost, tbody, totalCostEl);
+        tbody.appendChild(row);
+        sectionTotal += cost;
+        totalCostEl.textContent = `Total: $${sectionTotal.toFixed(2)}`;
+        itemNameInput.value = "";
+        itemCostInput.value = "";
+        saveTasks();
+    };
+
+    // ===== Things You Have / Need Lists =====
+    const listsContainer = document.createElement("div");
+    listsContainer.className = "list-container";
+    listsContainer.innerHTML = `
+        <h3>Things You Have</h3>
+        <ul class="have-list"></ul>
+        <input type="text" placeholder="Add item to 'Have'" class="have-input">
+        <button class="have-add">Add</button>
+        <h3>Things to Buy / Rent</h3>
+        <ul class="need-list"></ul>
+        <input type="text" placeholder="Add item to 'Need'" class="need-input">
+        <button class="need-add">Add</button>
+    `;
+    sectionDiv.appendChild(listsContainer);
+
+    // Load saved have/need lists
+    const haveListEl = listsContainer.querySelector(".have-list");
+    const needListEl = listsContainer.querySelector(".need-list");
+    const haveInput = listsContainer.querySelector(".have-input");
+    const needInput = listsContainer.querySelector(".need-input");
+    const haveAddBtn = listsContainer.querySelector(".have-add");
+    const needAddBtn = listsContainer.querySelector(".need-add");
+
+    if (savedData[section] && savedData[section].have) {
+        savedData[section].have.forEach(item => {
+            const li = document.createElement("li");
+            li.textContent = item;
+            haveListEl.appendChild(li);
+        });
+    }
+    if (savedData[section] && savedData[section].need) {
+        savedData[section].need.forEach(item => {
+            const li = document.createElement("li");
+            li.textContent = item;
+            needListEl.appendChild(li);
+        });
+    }
+
+    haveAddBtn.onclick = () => {
+        const value = haveInput.value.trim();
+        if (!value) return;
+        const li = document.createElement("li");
+        li.textContent = value;
+        haveListEl.appendChild(li);
+        haveInput.value = "";
+        saveTasks();
+    };
+
+    needAddBtn.onclick = () => {
+        const value = needInput.value.trim();
+        if (!value) return;
+        const li = document.createElement("li");
+        li.textContent = value;
+        needListEl.appendChild(li);
+        needInput.value = "";
+        saveTasks();
+    };
+
+    container.appendChild(sectionDiv);
 }
 
-function exportPDF() {
-  window.print();
+// ===== Create Budget Row =====
+function createBudgetRow(name, cost, tbody, totalCostEl) {
+    const row = document.createElement("tr");
+    row.innerHTML = `<td>${name}</td><td>${cost.toFixed(2)}</td><td><button style="background-color:#c94b4b;">Delete</button></td>`;
+    row.querySelector("button").onclick = () => {
+        tbody.removeChild(row);
+        saveTasks();
+    };
+    return row;
 }
 
-createPlanner();
+// ===== Save All Data =====
+function saveTasks() {
+    const sections = container.querySelectorAll(".section");
+    const data = {};
+    sections.forEach(sec => {
+        const title = sec.querySelector("h2").textContent;
+        const tasks = Array.from(sec.querySelectorAll(".task-item input[type='checkbox']")).map(cb => cb.checked);
+        const budgetRows = Array.from(sec.querySelectorAll("tbody tr")).map(r => ({
+            name: r.children[0].textContent,
+            cost: parseFloat(r.children[1].textContent)
+        }));
+        const haveItems = Array.from(sec.querySelectorAll(".have-list li")).map(li => li.textContent);
+        const needItems = Array.from(sec.querySelectorAll(".need-list li")).map(li => li.textContent);
+        data[title] = { tasks, budget: budgetRows, have: haveItems, need: needItems };
+    });
+    localStorage.setItem("gardenPlannerData", JSON.stringify(data));
+    updateOverallSummary();
+}
+
+// ===== Update Overall Summary =====
+function updateOverallSummary() {
+    const data = JSON.parse(localStorage.getItem("gardenPlannerData")) || {};
+    let total = 0;
+    for (let section in data) {
+        if (data[section].budget) {
+            total += data[section].budget.reduce((sum, b) => sum + b.cost, 0);
+        }
+    }
+    overallSummaryEl.textContent = `Total Cost Across All Timelines: $${total.toFixed(2)}`;
+}
+
+updateOverallSummary();
 </script>
 
 </body>
