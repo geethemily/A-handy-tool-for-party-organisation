@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Garden Party Planner</title>
 
-<!-- PDF Library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <style>
@@ -22,59 +21,15 @@ header {
     background: linear-gradient(to right, #cde5cd, #eaf4ea);
 }
 
-header h1 {
-    margin: 0;
-    font-size: 2.2rem;
-}
-
 .container {
-    max-width: 1000px;
+    max-width: 1100px;
     margin: 30px auto;
     padding: 20px;
 }
 
-.section {
-    padding: 25px;
-    margin-bottom: 25px;
-    border-radius: 12px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.05);
-    page-break-after: always;
-}
-
-.section:nth-child(odd) { background-color: #eaf4ea; }
-.section:nth-child(even) { background-color: #d1e7d1; }
-
-.task-item {
-    display: flex;
-    align-items: center;
-    margin-bottom: 8px;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-}
-
-table th, table td {
-    border: 1px solid #ddd;
-    padding: 8px;
-}
-
-table th {
-    background-color: #cde5cd;
-}
-
-input[type="text"], input[type="number"] {
-    padding: 6px;
-    margin-top: 5px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-}
-
 button {
     padding: 8px 16px;
-    margin: 8px 5px 8px 0;
+    margin: 6px 6px 6px 0;
     background-color: #3b5d3b;
     color: white;
     border: none;
@@ -86,28 +41,65 @@ button:hover {
     background-color: #2f4b2f;
 }
 
-#overall-summary {
-    background-color: #cde5cd;
-    padding: 15px;
-    border-radius: 10px;
-    font-weight: bold;
-    margin-bottom: 20px;
-    text-align: center;
+/* MENU SECTION */
+.menu-section {
+    background: #eaf4ea;
+    padding: 25px;
+    border-radius: 12px;
+    margin-bottom: 30px;
 }
 
-.cover-page {
-    text-align: center;
-    padding: 100px 20px;
-    page-break-after: always;
-}
-
-.cover-page h1 {
-    font-size: 3rem;
+.menu-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
     margin-bottom: 20px;
 }
 
-.cover-page p {
-    font-size: 1.2rem;
+.menu-tab {
+    padding: 10px 15px;
+    background: #cde5cd;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.menu-tab.active {
+    background: #3b5d3b;
+    color: white;
+}
+
+.menu-content {
+    display: none;
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+}
+
+.menu-content.active {
+    display: block;
+}
+
+.menu-content h3 {
+    margin-top: 0;
+}
+
+ul {
+    padding-left: 20px;
+}
+
+input {
+    padding: 6px;
+    margin-top: 5px;
+    margin-right: 5px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+
+.section {
+    padding: 25px;
+    margin-bottom: 25px;
+    border-radius: 12px;
+    background-color: #d1e7d1;
 }
 </style>
 </head>
@@ -115,214 +107,153 @@ button:hover {
 <body>
 
 <header>
-    <h1>Interactive Garden Party Planner</h1>
-    <p>Track tasks, budgets, and items you have/need with auto-save!</p>
+<h1>Interactive Garden Party Planner</h1>
+<p>Tasks • Budget • Menu Planner • Ingredients</p>
 </header>
 
 <div class="container">
 
-<div id="overall-summary">Total Cost Across All Timelines: $0</div>
-
 <button onclick="exportFullPDF()">📄 Export Full Planner</button>
-<button onclick="exportBudgetOnly()">💰 Download Budget Only</button>
 
+<!-- ================= MENU PLANNER ================= -->
+<div class="menu-section">
+<h2>🍽 Interactive Menu Planner</h2>
+
+<div class="menu-tabs" id="menuTabs"></div>
+<div id="menuContents"></div>
+
+</div>
+
+<!-- Existing planner container -->
 <div id="planner-container"></div>
+
 </div>
 
 <script>
-// ===== Timeline Data =====
-const tasksData = {
-"1–2 Weeks Before: Planning & Foundations": [
-"Decide purpose & vibe",
-"Set date & guest count",
-"Choose theme",
-"Create budget",
-"Plan menu",
-"Send invites"
-],
-"5–7 Days Before: Prep Mode": [
-"Finalize menu",
-"Order non-perishables",
-"Arrange rentals",
-"Prepare playlist",
-"Tidy garden"
-],
-"1 Day Before": [
-"Arrange tables",
-"Set decor",
-"Prep food",
-"Confirm RSVPs"
-],
-"Day Of": [
-"Finish prep",
-"Set drink station",
-"Greet guests",
-"Enjoy!"
-],
-"After the Party": [
-"Clear food",
-"Quick cleanup",
-"Note improvements"
-]
-};
 
-const container = document.getElementById("planner-container");
-const overallSummaryEl = document.getElementById("overall-summary");
-let savedData = JSON.parse(localStorage.getItem("gardenPlannerData")) || {};
+// ================= MENU DATA =================
+const menuCategories = [
+"Welcome Drinks",
+"Appetizers / Starters",
+"Salads & Light Bites",
+"Main Options",
+"Desserts",
+"Extras / Grazing Table",
+"Kids Menu"
+];
 
-// ===== Render Sections =====
-for (let section in tasksData) {
-const sectionDiv = document.createElement("div");
-sectionDiv.className = "section";
+let savedMenu = JSON.parse(localStorage.getItem("gardenMenuData")) || {};
 
-const h2 = document.createElement("h2");
-h2.textContent = section;
-sectionDiv.appendChild(h2);
+const tabsContainer = document.getElementById("menuTabs");
+const contentContainer = document.getElementById("menuContents");
 
-// Tasks
-tasksData[section].forEach((task, idx) => {
-const div = document.createElement("div");
-div.className = "task-item";
-const cb = document.createElement("input");
-cb.type = "checkbox";
-if(savedData[section]?.tasks?.[idx]) cb.checked = true;
-cb.onchange = saveAll;
-div.appendChild(cb);
-div.appendChild(document.createTextNode(task));
-sectionDiv.appendChild(div);
+// Create Tabs
+menuCategories.forEach((category, index) => {
+
+    const tab = document.createElement("div");
+    tab.className = "menu-tab";
+    tab.textContent = category;
+    if(index === 0) tab.classList.add("active");
+    tabsContainer.appendChild(tab);
+
+    const content = document.createElement("div");
+    content.className = "menu-content";
+    if(index === 0) content.classList.add("active");
+
+    content.innerHTML = `
+        <h3>${category}</h3>
+
+        <h4>Menu Items</h4>
+        <ul class="menu-items"></ul>
+        <input type="text" placeholder="Add menu item" class="menu-item-input">
+        <button class="add-menu-item">Add</button>
+
+        <h4 style="margin-top:20px;">Ingredients to Buy</h4>
+        <ul class="ingredients-list"></ul>
+        <input type="text" placeholder="Add ingredient" class="ingredient-input">
+        <button class="add-ingredient">Add</button>
+    `;
+
+    contentContainer.appendChild(content);
+
+    // Tab Click
+    tab.onclick = () => {
+        document.querySelectorAll(".menu-tab").forEach(t=>t.classList.remove("active"));
+        document.querySelectorAll(".menu-content").forEach(c=>c.classList.remove("active"));
+        tab.classList.add("active");
+        content.classList.add("active");
+    };
+
+    // Load Saved Data
+    if(savedMenu[category]){
+        savedMenu[category].items?.forEach(i=>{
+            addListItem(content.querySelector(".menu-items"), i);
+        });
+        savedMenu[category].ingredients?.forEach(i=>{
+            addListItem(content.querySelector(".ingredients-list"), i);
+        });
+    }
+
+    // Add Menu Item
+    content.querySelector(".add-menu-item").onclick = ()=>{
+        const input = content.querySelector(".menu-item-input");
+        if(!input.value) return;
+        addListItem(content.querySelector(".menu-items"), input.value);
+        input.value="";
+        saveMenu();
+    };
+
+    // Add Ingredient
+    content.querySelector(".add-ingredient").onclick = ()=>{
+        const input = content.querySelector(".ingredient-input");
+        if(!input.value) return;
+        addListItem(content.querySelector(".ingredients-list"), input.value);
+        input.value="";
+        saveMenu();
+    };
 });
 
-// Budget Table
-const table = document.createElement("table");
-table.innerHTML = `
-<thead>
-<tr><th>Item</th><th>Cost ($)</th><th>Action</th></tr>
-</thead>
-<tbody></tbody>
-`;
-sectionDiv.appendChild(table);
-
-const tbody = table.querySelector("tbody");
-
-const inputName = document.createElement("input");
-inputName.placeholder = "Item";
-
-const inputCost = document.createElement("input");
-inputCost.type = "number";
-inputCost.placeholder = "Cost";
-
-const addBtn = document.createElement("button");
-addBtn.textContent = "Add";
-addBtn.onclick = () => {
-if(!inputName.value || !inputCost.value) return;
-addRow(inputName.value, parseFloat(inputCost.value), tbody);
-inputName.value = "";
-inputCost.value = "";
-saveAll();
-};
-
-sectionDiv.appendChild(inputName);
-sectionDiv.appendChild(inputCost);
-sectionDiv.appendChild(addBtn);
-
-if(savedData[section]?.budget){
-savedData[section].budget.forEach(b=>{
-addRow(b.name,b.cost,tbody);
-});
+// Add List Item Helper
+function addListItem(list, text){
+    const li = document.createElement("li");
+    li.textContent = text;
+    list.appendChild(li);
 }
 
-container.appendChild(sectionDiv);
+// Save Menu
+function saveMenu(){
+    let data={};
+    document.querySelectorAll(".menu-content").forEach(content=>{
+        const category = content.querySelector("h3").textContent;
+        const items = [...content.querySelectorAll(".menu-items li")].map(li=>li.textContent);
+        const ingredients = [...content.querySelectorAll(".ingredients-list li")].map(li=>li.textContent);
+        data[category]={items,ingredients};
+    });
+    localStorage.setItem("gardenMenuData",JSON.stringify(data));
 }
 
-// ===== Add Budget Row =====
-function addRow(name,cost,tbody){
-const row = document.createElement("tr");
-row.innerHTML = `<td>${name}</td><td>${cost.toFixed(2)}</td><td><button>Delete</button></td>`;
-row.querySelector("button").onclick=()=>{
-tbody.removeChild(row);
-saveAll();
-};
-tbody.appendChild(row);
-}
-
-// ===== Save =====
-function saveAll(){
-const sections = container.querySelectorAll(".section");
-let data={};
-sections.forEach(sec=>{
-const title=sec.querySelector("h2").textContent;
-const tasks=[...sec.querySelectorAll("input[type=checkbox]")].map(cb=>cb.checked);
-const budget=[...sec.querySelectorAll("tbody tr")].map(r=>({
-name:r.children[0].textContent,
-cost:parseFloat(r.children[1].textContent)
-}));
-data[title]={tasks,budget};
-});
-localStorage.setItem("gardenPlannerData",JSON.stringify(data));
-updateTotal();
-}
-
-// ===== Total =====
-function updateTotal(){
-const data=JSON.parse(localStorage.getItem("gardenPlannerData"))||{};
-let total=0;
-for(let s in data){
-if(data[s].budget){
-total+=data[s].budget.reduce((a,b)=>a+b.cost,0);
-}
-}
-overallSummaryEl.textContent=`Total Cost Across All Timelines: $${total.toFixed(2)}`;
-}
-updateTotal();
-
-// ===== Cover Page Generator =====
-function createCover(){
-const cover=document.createElement("div");
-cover.className="cover-page";
-cover.innerHTML=`
-<h1>Garden Party Planner</h1>
-<p>Created on ${new Date().toLocaleDateString()}</p>
-<p>Total Budget: ${overallSummaryEl.textContent}</p>
-`;
-return cover;
-}
-
-// ===== Export Full PDF =====
+// ================= PDF EXPORT =================
 function exportFullPDF(){
-const clone=document.querySelector(".container").cloneNode(true);
-clone.prepend(createCover());
-clone.querySelectorAll("button").forEach(b=>b.remove());
-html2pdf().set({
-margin:0.5,
-filename:"Garden-Party-Full-Planner.pdf",
-html2canvas:{scale:2},
-jsPDF:{unit:'in',format:'letter',orientation:'portrait'}
-}).from(clone).save();
+    const clone=document.querySelector(".container").cloneNode(true);
+    clone.querySelectorAll("button").forEach(b=>b.remove());
+
+    const cover=document.createElement("div");
+    cover.innerHTML=`
+        <div style="text-align:center;padding:100px 20px;">
+            <h1>Garden Party Planner</h1>
+            <p>${new Date().toLocaleDateString()}</p>
+        </div>
+    `;
+    clone.prepend(cover);
+
+    html2pdf().set({
+        margin:0.5,
+        filename:"Garden-Party-Planner.pdf",
+        html2canvas:{scale:2},
+        jsPDF:{unit:'in',format:'letter'}
+    }).from(clone).save();
 }
 
-// ===== Export Budget Only =====
-function exportBudgetOnly(){
-const budgetDiv=document.createElement("div");
-budgetDiv.className="cover-page";
-budgetDiv.innerHTML=`<h1>Garden Party Budget</h1>
-<p>Date: ${new Date().toLocaleDateString()}</p>`;
-
-document.querySelectorAll(".section").forEach(sec=>{
-const title=sec.querySelector("h2").textContent;
-const table=sec.querySelector("table").cloneNode(true);
-const wrapper=document.createElement("div");
-wrapper.innerHTML=`<h2>${title}</h2>`;
-wrapper.appendChild(table);
-budgetDiv.appendChild(wrapper);
-});
-
-html2pdf().set({
-margin:0.5,
-filename:"Garden-Party-Budget-Only.pdf",
-html2canvas:{scale:2},
-jsPDF:{unit:'in',format:'letter',orientation:'portrait'}
-}).from(budgetDiv).save();
-}
 </script>
 
 </body>
